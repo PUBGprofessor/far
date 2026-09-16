@@ -55,8 +55,9 @@ class PL_LoFTR(pl.LightningModule):
         self.pretrained_ckpt = None
         if pretrained_ckpt:
             self.pretrained_ckpt = pretrained_ckpt
-            state_dict = torch.load(pretrained_ckpt, map_location='cpu')['state_dict']
-
+            # state_dict = torch.load(pretrained_ckpt, map_location='cpu')['state_dict']
+            # 修改为：
+            state_dict = torch.load(pretrained_ckpt, map_location='cpu', weights_only=False)['state_dict']
             if config.USE_CORRESPONDENCE_TRANSFORMER:
                 state_dict = {k.replace('matcher.', ''): v for k, v in state_dict.items()}
             strict=True

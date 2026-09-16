@@ -11,7 +11,12 @@ print(SCRIPT_DIR)
 import numpy as np
 import torch
 import kornia.geometry.epipolar as epi
+
 from kornia.core import Device, Module, Tensor, zeros
+# 修改后：
+# from kornia.core import Device, Module, Tensor
+# from torch import zeros
+
 from kornia.core.check import KORNIA_CHECK_SHAPE
 from kornia.geometry import (
     find_fundamental,
