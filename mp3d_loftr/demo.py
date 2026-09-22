@@ -1,3 +1,5 @@
+# demo.py - 演示脚本详细注释
+
 import pytorch_lightning as pl
 import argparse
 
@@ -8,53 +10,66 @@ import sys
 import torch
 import cv2
 import numpy as np
-sys.path.append('third_party/prior_ransac')
+sys.path.append("third_party/prior_ransac")  # 添加prior_ransac模块到Python路径
 
 def parse_args():
-    # init a costum parser which will be added into pl.Trainer parser
+    """解析命令行参数"""
+    # 初始化自定义解析器，添加到pl.Trainer解析器中
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    
+    # 配置文件路径
     parser.add_argument(
-        'data_cfg_path', type=str, help='data config path')
+        "data_cfg_path", type=str, help="数据配置文件路径")
     parser.add_argument(
-        'main_cfg_path', type=str, help='main config path')
+        "main_cfg_path", type=str, help="主配置文件路径")
+    
+    # 模型配置
     parser.add_argument(
-        '--ckpt_path', type=str, default="", help='path to the checkpoint')
+        "--ckpt_path", type=str, default="", help="检查点路径")
     parser.add_argument(
-        '--exp_name', type=str, default="", help='exp_name, if not present use ckpt')
+        "--exp_name", type=str, default="", help="实验名称，如果未提供则使用检查点名称")
     parser.add_argument(
-        '--batch_size', type=int, default=1, help='batch_size per gpu')
+        "--batch_size", type=int, default=1, help="每个GPU的批大小")
     parser.add_argument(
-        '--num_workers', type=int, default=2)
+        "--num_workers", type=int, default=2, help="数据加载器的工作进程数")
+    
+    # 相机内参配置
     parser.add_argument(
-        '--fx', type=float, default=517.97, help='focal length x')
+        "--fx", type=float, default=517.97, help="焦距x")
     parser.add_argument(
-        '--fy', type=float, default=517.97, help='focal length y')
+        "--fy", type=float, default=517.97, help="焦距y")
     parser.add_argument(
-        '--cx', type=float, default=320, help='principal point x')
+        "--cx", type=float, default=320, help="主点x")
     parser.add_argument(
-        '--cy', type=float, default=240, help='principal point y')
+        "--cy", type=float, default=240, help="主点y")
+    
+    # 图像尺寸配置
     parser.add_argument(
-        '--h', type=int, default=640, help='img height x')
+        "--h", type=int, default=640, help="图像高度")
     parser.add_argument(
-        '--w', type=int, default=480, help='img width y')
+        "--w", type=int, default=480, help="图像宽度")
+    
+    # 输入图像路径
     parser.add_argument(
-        '--img_path0', type=str, default="test", help='img path 0')
+        "--img_path0", type=str, default="test", help="图像0路径")
     parser.add_argument(
-        '--img_path1', type=str, default="test", help='img path 1')
+        "--img_path1", type=str, default="test", help="图像1路径")
+    
+    # 添加PyTorch Lightning参数
     parser = pl.Trainer.add_argparse_args(parser)
     return parser.parse_args()
 
-if __name__ == '__main__':
-    # parse arguments
+if __name__ == "__main__":
+    # 解析参数
     args = parse_args()
 
-    # init default-cfg and merge it with the main- and data-cfg
+    # 初始化默认配置并合并主配置和数据配置
     config = get_cfg_defaults()
     config.merge_from_file(args.main_cfg_path)
     config.merge_from_file(args.data_cfg_path)
-    pl.seed_everything(config.TRAINER.SEED)  # reproducibility
+    pl.seed_everything(config.TRAINER.SEED)  # 设置随机种子以保证可重复性
 
-    # not relevant
+    # 设置不相关的参数（用于演示）
     config.LOFTR.FEAT_SIZE = 128
     config.LOFTR.NUM_ENCODER_LAYERS = 6
     config.LOFTR.NUM_BANDS = 10
@@ -67,16 +82,15 @@ if __name__ == '__main__':
     config.STRICT_FALSE = False
     config.EVAL_FIT_ONLY = False
 
-
-    # relevant
+    # 设置相关参数（用于演示）
     config.LOFTR.PREDICT_TRANSLATION_SCALE = False
     config.LOFTR.REGRESS_RT = True
     config.LOFTR.REGRESS_LOFTR_LAYERS = 1
     config.LOFTR.REGRESS.USE_POS_EMBEDDING = True
     config.LOFTR.REGRESS.REGRESS_USE_NUM_CORRES = True
-    config.LOFTR.COARSE.LAYER_NAMES = ['self', 'cross'] * 3
+    config.LOFTR.COARSE.LAYER_NAMES = ["self", "cross"] * 3
 
-    # pass into config
+    # 设置配置参数
     config.LOFTR.FROM_SAVED_PREDS = None
     config.LOFTR.SOLVER = "prior_ransac"
     config.LOFTR.USE_MANY_RANSAC_THR = True
@@ -91,6 +105,7 @@ if __name__ == '__main__':
     config.LOFTR.REGRESS.SAVE_GATING_WEIGHTS = False
     config.LOFTR.TRAINING = False
 
+    # 设置其他配置参数
     config.LOAD_PREDICTIONS_PATH = None
     config.EXP_NAME = args.exp_name
     config.USE_CORRESPONDENCE_TRANSFORMER = False
@@ -98,15 +113,17 @@ if __name__ == '__main__':
     config.EVAL_SPLIT = "test"
     config.PL_VERSION = pl.__version__
 
-    # load data
-    image0 = cv2.imread(args.img_path0, cv2.IMREAD_GRAYSCALE)
-    image0 = cv2.resize(image0, (args.w, args.h))
-    image0 = torch.from_numpy(image0).float()[None].unsqueeze(0).cuda() / 255
-    image1 = cv2.imread(args.img_path1, cv2.IMREAD_GRAYSCALE)
-    image1 = cv2.resize(image1, (args.w, args.h))
-    image1 = torch.from_numpy(image1).float()[None].unsqueeze(0).cuda() / 255
+    # 加载图像
+    image0 = cv2.imread(args.img_path0, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
+    image0 = cv2.resize(image0, (args.w, args.h))  # 调整图像尺寸
+    image0 = torch.from_numpy(image0).float()[None].unsqueeze(0).cuda() / 255  # 转换为张量并归一化
+    
+    image1 = cv2.imread(args.img_path1, cv2.IMREAD_GRAYSCALE)  # 读取灰度图像
+    image1 = cv2.resize(image1, (args.w, args.h))  # 调整图像尺寸
+    image1 = torch.from_numpy(image1).float()[None].unsqueeze(0).cuda() / 255  # 转换为张量并归一化
 
     def get_intrinsics(fx, fy, cx, cy):
+        """获取相机内参矩阵"""
         K = [[fx, 0, cx],
             [0, fy, cy],
             [0, 0, 1]]
@@ -116,36 +133,37 @@ if __name__ == '__main__':
         
     K_0, K_1 = get_intrinsics(float(args.fx), float(args.fy), float(args.cx), float(args.cy))
 
-    # unused
+    # 创建未使用的张量（占位符）
     depth0 = depth1 = torch.tensor([]).unsqueeze(0).cuda()
     T_0to1 = T_1to0 = torch.tensor([]).unsqueeze(0).cuda()
     scene_name = torch.tensor([]).unsqueeze(0).cuda()
     loaded_preds = torch.tensor([]).unsqueeze(0).cuda()
     lightweight_numcorr = torch.tensor([0]).unsqueeze(0).cuda()
 
+    # 构建输入批次
     batch = {
-        'image0': image0,   # (1, h, w)
-        'image1': image1,
-        'K0': K_0,  # (3, 3)
-        'K1': K_1,
-        # below is unused
-        'depth0': depth0,   # (h, w)
-        'depth1': depth1,
-        'T_0to1': T_0to1,   # (4, 4)
-        'T_1to0': T_1to0,
-        'dataset_name': ['mp3d'],
-        'scene_id': scene_name,
-        'pair_id': 0,
-        'pair_names': (args.img_path0, args.img_path1),
-        'loaded_predictions': loaded_preds,
-        'lightweight_numcorr': lightweight_numcorr,
+        "image0": image0,   # (1, h, w) - 图像0
+        "image1": image1,   # (1, h, w) - 图像1
+        "K0": K_0,         # (3, 3) - 相机0内参
+        "K1": K_1,         # (3, 3) - 相机1内参
+        # 以下字段未使用
+        "depth0": depth0,   # (h, w) - 深度图0
+        "depth1": depth1,   # (h, w) - 深度图1
+        "T_0to1": T_0to1,   # (4, 4) - 真实位姿0到1
+        "T_1to0": T_1to0,   # (4, 4) - 真实位姿1到0
+        "dataset_name": ["mp3d"],  # 数据集名称
+        "scene_id": scene_name,     # 场景ID
+        "pair_id": 0,               # 对ID
+        "pair_names": (args.img_path0, args.img_path1),  # 图像对名称
+        "loaded_predictions": loaded_preds,  # 加载的预测结果
+        "lightweight_numcorr": lightweight_numcorr,  # 轻量级对应点数量
     }
 
-    # lightning module
+    # 初始化模型
     model = PL_LoFTR(config, pretrained_ckpt=args.ckpt_path, split="test").eval().cuda()
     
-    # forward pass
+    # 前向传播
     batch = model.test_step(batch, batch_idx=0, skip_eval=True)
 
-    # output
-    print("predicted pose is:\n", np.round(batch['loftr_rt'].cpu().numpy(),4))
+    # 输出结果
+    print("预测的位姿是：\n", np.round(batch["loftr_rt"].cpu().numpy(),4))
